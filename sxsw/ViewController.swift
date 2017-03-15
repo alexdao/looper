@@ -41,10 +41,9 @@ class ViewController: UIViewController, PNObjectEventListener {
         var url = ""
     }
     
-
-    
     func client(_ client: PubNub, didReceiveMessage message: PNMessageResult) {
         imageView.isHidden = false
+        button.isHidden = true
         label.isHidden = true
         let url = URL(string: "https://dd9fae67.ngrok.io/predictions.png")
         let data = try? Data(contentsOf: url!)
@@ -57,7 +56,6 @@ class ViewController: UIViewController, PNObjectEventListener {
             for rect in rects {
                 let data = rect.components(separatedBy: ",")
                 if data.count > 1 {
-                    print(data)
                     let left = Float(data[0])
                     let right = Float(data[1])
                     let top = Float(data[2])
@@ -89,7 +87,13 @@ class ViewController: UIViewController, PNObjectEventListener {
     }
     
     func handleTap(_ sender: UITapGestureRecognizer) {
-        UIApplication.shared.openURL(URL(string: urls[(sender.view?.tag)!])!)
+        if let tag = sender.view?.tag {
+            if tag < urls.count {
+                if let url = URL(string: urls[tag]) {
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                }
+            }
+        }
     }
     
     override func viewDidLoad() {
@@ -138,8 +142,10 @@ class ViewController: UIViewController, PNObjectEventListener {
         view.addSubview(button)
         
         button.snp.makeConstraints { make in
-            make.top.equalTo(label.snp.bottom).offset(50)
+            make.centerY.equalTo(view).offset(110)
             make.centerX.equalTo(label.snp.centerX)
+            make.width.equalTo(75)
+            make.height.equalTo(75)
         }
         
         button.setImage(UIImage(named: "play"), for: .normal)
@@ -152,10 +158,10 @@ class ViewController: UIViewController, PNObjectEventListener {
     
     func pausePlayVideo() {
         if(playState) {
-            button.setImage(UIImage(named: "pause"), for: .normal)
+            button.setImage(UIImage(named: "play"), for: .normal)
             playState = false
         } else {
-            button.setImage(UIImage(named: "play"), for: .normal)
+            button.setImage(UIImage(named: "pause"), for: .normal)
             playState = true
         }
         client.publish("space", toChannel: "capture", compressed: false, withCompletion: nil)
@@ -169,6 +175,7 @@ class ViewController: UIViewController, PNObjectEventListener {
         for view in views {
             view.removeFromSuperview()
         }
+        button.isHidden = false
         imageView.isHidden = true
         label.isHidden = false
     }
